@@ -78,6 +78,10 @@ public final class DropDown: UIView {
 	/// The current visible drop down. There can be only one visible drop down at a time.
 	public static weak var VisibleDropDown: DropDown?
 
+    public var dropDownHeight: CGFloat = 0.0 {
+        didSet { setNeedsUpdateConstraints() }
+    }
+    
 	//MARK: UI
 	fileprivate let dismissableView = UIView()
 	fileprivate let tableViewContainer = UIView()
@@ -548,35 +552,71 @@ private extension DropDown {
 
 extension DropDown {
 
-	public override func updateConstraints() {
-		if !didSetupConstraints {
-			setupConstraints()
-		}
-
-		didSetupConstraints = true
-
-		let layout = computeLayout()
-
-		if !layout.canBeDisplayed {
-			super.updateConstraints()
-			hide()
-
-			return
-		}
-
-		xConstraint.constant = layout.x
-		yConstraint.constant = layout.y
-		widthConstraint.constant = layout.width
-		heightConstraint.constant = layout.visibleHeight
-
-		tableView.isScrollEnabled = layout.offscreenHeight > 0
-
-		DispatchQueue.main.async { [weak self] in
-			self?.tableView.flashScrollIndicators()
-		}
-
-		super.updateConstraints()
-	}
+    public override func updateConstraints() {
+        if !didSetupConstraints {
+            setupConstraints()
+        }
+        
+        didSetupConstraints = true
+        
+        let layout = computeLayout()
+        
+        if !layout.canBeDisplayed {
+            super.updateConstraints()
+            hide()
+            return
+        }
+        
+        xConstraint.constant = layout.x
+        yConstraint.constant = layout.y
+        widthConstraint.constant = layout.width
+        
+        // Change height of dropdown
+        if dropDownHeight > 0 && dropDownHeight <= layout.visibleHeight {
+            heightConstraint.constant = dropDownHeight
+        } else {
+            heightConstraint.constant = layout.visibleHeight
+        }
+        
+        // Enable scrolling if offscreen content or dropdown height is set
+        tableView.isScrollEnabled = layout.offscreenHeight > 0 || dropDownHeight > 0
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.tableView.flashScrollIndicators()
+        }
+        
+        super.updateConstraints()
+    }
+    
+//    public override func updateConstraints() {
+//        if !didSetupConstraints {
+//            setupConstraints()
+//        }
+//
+//        didSetupConstraints = true
+//
+//        let layout = computeLayout()
+//
+//        if !layout.canBeDisplayed {
+//            super.updateConstraints()
+//            hide()
+//
+//            return
+//        }
+//
+//        xConstraint.constant = layout.x
+//        yConstraint.constant = layout.y
+//        widthConstraint.constant = layout.width
+//        heightConstraint.constant = layout.visibleHeight
+//
+//        tableView.isScrollEnabled = layout.offscreenHeight > 0
+//
+//        DispatchQueue.main.async { [weak self] in
+//            self?.tableView.flashScrollIndicators()
+//        }
+//
+//        super.updateConstraints()
+//    }
 
 	fileprivate func setupConstraints() {
 		translatesAutoresizingMaskIntoConstraints = false
